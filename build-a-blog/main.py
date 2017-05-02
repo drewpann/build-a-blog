@@ -24,14 +24,25 @@ class Entry(db.Model):
     entry = db.TextProperty(required = True)
     created = db.DateTimeProperty(auto_now_add = True)
 
-class MainPage(Handler):
-    def render_front(self, title="", entry="", error=""):
-        entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC")
+class MainHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.out.write("""Check out the blog <a href="/blog">here</a>!""")
 
-        self.render("front.html", title=title, entry=entry, error=error, entries=entries)
+class Blog(Handler):
+    def render_blog(self, title="", entry=""):
+        recent_entries = db.GqlQuery("SELECT * FROM Entry ORDER BY created DESC LIMIT 5")
+
+        self.render("view.html", entries=recent_entries)
 
     def get(self):
-        self.render_front()
+        self.render_blog()
+
+class NewPost(Handler):
+    def render_write(self, title="", entry="", error=""):
+        self.render("write.html", title=title, entry=entry, error=error)
+
+    def get(self):
+        self.render_write()
 
     def post(self):
         title = self.request.get("title")
@@ -40,12 +51,17 @@ class MainPage(Handler):
         if title and entry:
             e = Entry(title = title, entry = entry)
             e.put()
+            error = "New Post Published!"
+            self.render_write("","",error)
 
-            self.redirect("/")
         else:
             error = "Please enter both a title and an entry!"
-            self.render_front(title, entry, error)
+            self.render_write(title, entry, error)
+
 
 app = webapp2.WSGIApplication([
-    ('/', MainPage)
+    ('/', MainHandler),
+    ('/blog', Blog),
+#    ('/all', AllPosts),
+    ('/newpost', NewPost)
 ], debug=True)
