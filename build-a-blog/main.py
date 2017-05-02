@@ -50,8 +50,9 @@ class NewPost(Handler):
         if title and entry:
             e = Entry(title = title, entry = entry)
             e.put()
-            error = "New Post Published!"
-            self.render_write("","",error)
+            postid = str(e.key().id())
+            blog_url="blog/" + postid
+            self.redirect(blog_url)
 
         else:
             error = "Please enter both a title and an entry!"
@@ -71,7 +72,11 @@ class ViewPostHandler(Handler):
         self.render("viewone.html", entry=entry)
 
     def get(self,id):
-        self.render_post(5770237022568448)
+        if not id:
+            self.error(404)
+            return
+
+        self.render_post(id)
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler),
